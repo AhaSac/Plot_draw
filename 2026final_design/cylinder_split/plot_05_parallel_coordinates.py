@@ -17,77 +17,89 @@ from cylinder_plot_common import *
 # ============================== 对应 PNG：cylinder_parallel_coordinates.png ==============================
 # 功能：平行坐标图：展示高维参数组合、响应指标和最优解轨迹。
 def draw_parallel_coordinates(design: pd.DataFrame, best: pd.Series) -> None:
-    """平行坐标图：展示高维参数组合及最优解轨迹。"""
+    """平行坐标图：强化不可行点与 GPR 引导点的颜色区分。"""
     variables = PARAMETER_COLS + RESPONSE_COLS
     display_labels = [
-        "t",
-        "n",
-        "p",
-        "a",
-        "质量\n越低越好",
-        "屈曲压力\n越高越好",
+        "t", "n", "p", "a",
+        "质量",
+        "屈曲特征值",
     ]
     normalized = design[variables].apply(normalize_to_unit)
     x = np.arange(len(variables))
 
-    fig, ax = plt.subplots(figsize=(6.85, 2.95), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(7.2, 3.1), constrained_layout=True)
 
+    # 1. 绘制不可行点：使用极浅的灰色，线宽极细，作为背景
     for _, row in normalized.loc[~design["feasible"]].iterrows():
-        ax.plot(x, row.to_numpy(dtype=float), color=COLORS["gray"], lw=0.55, alpha=0.25, zorder=1)
+        ax.plot(x, row.to_numpy(dtype=float), color="#AEAEAE", lw=0.4, alpha=0.15, zorder=1)
 
-    for stage, color, alpha, label in [
-        ("LHS screening", COLORS["blue"], 0.34, "Feasible LHS"),
-        ("GPR-guided verification", COLORS["green"], 0.45, "Feasible GPR-guided"),
-    ]:
+    # 2. 定义阶段颜色逻辑
+    # 调整 GPR 的颜色为更亮、对比度更高的鲜绿色或深绿色
+    stages_config = [
+        ("LHS screening", COLORS["blue"], 0.4, "LHS 可行", 0.95),
+        ("GPR-guided verification", "#2ECC71", 0.6, "GPR 引导可行", 1.25), # 使用更鲜亮的翡翠绿，加粗
+    ]
+
+    for stage, color, alpha, label, lw in stages_config:
         subset = design[(design["feasible"]) & (design["stage"] == stage)]
         for idx in subset.index:
-            ax.plot(x, normalized.loc[idx].to_numpy(dtype=float), color=color, lw=0.95, alpha=alpha, zorder=2)
+            ax.plot(x, normalized.loc[idx].to_numpy(dtype=float), color=color, lw=lw, alpha=alpha, zorder=2)
 
+    # 3. 最优解轨迹
     best_values = []
     for variable in variables:
         low = design[variable].min()
         high = design[variable].max()
-        if abs(high - low) < 1e-12:
-            best_values.append(0.0)
-        else:
-            best_values.append((best[variable] - low) / (high - low))
+        val = 0.0 if abs(high - low) < 1e-12 else (best[variable] - low) / (high - low)
+        best_values.append(val)
 
     ax.plot(
-        x,
-        best_values,
+        x, best_values,
         color=COLORS["orange"],
-        lw=2.4,
+        lw=2.6,
         marker="o",
-        markersize=4.6,
-        markeredgecolor=COLORS["black"],
-        markeredgewidth=0.35,
+        markersize=5.0,
+        markeredgecolor="black",
+        markeredgewidth=0.5,
         label=f"最优解：{best['case_name']}",
         zorder=5,
     )
 
+    # 辅助线与刻度标注
     for xpos in x:
-        ax.axvline(xpos, color=COLORS["light_gray"], lw=0.65, zorder=0)
+        ax.axvline(xpos, color="#D0D0D0", lw=0.7, ls="-", zorder=0)
 
     for xpos, variable in zip(x, variables):
-        low = design[variable].min()
-        high = design[variable].max()
-        ax.text(xpos, 1.055, f"{high:.3g}", ha="center", va="bottom", fontsize=5.8, color=COLORS["gray"])
-        ax.text(xpos, -0.075, f"{low:.3g}", ha="center", va="top", fontsize=5.8, color=COLORS["gray"])
+        low, high = design[variable].min(), design[variable].max()
+        ax.text(xpos, 1.05, f"{high:.3g}", ha="center", va="bottom", fontsize=6, color="#666666")
+        ax.text(xpos, -0.05, f"{low:.3g}", ha="center", va="top", fontsize=6, color="#666666")
 
-    ax.set_xlim(x[0] - 0.15, x[-1] + 0.15)
-    ax.set_ylim(-0.11, 1.11)
-    ax.set_xticks(x, display_labels)
+    # 样式设置
+    ax.set_xlim(x[0] - 0.2, x[-1] + 0.2)
+    ax.set_ylim(-0.12, 1.12)
+    ax.set_xticks(x)
+    ax.set_xticklabels(display_labels)
     ax.set_ylabel("归一化取值")
-    ax.set_title("设计变量与响应的平行坐标图")
+    
+    # 4. 图例调整：将图例放在右侧，框线淡化
     legend_handles = [
-        Line2D([0], [0], color=COLORS["gray"], lw=0.9, alpha=0.45, label="不可行"),
-        Line2D([0], [0], color=COLORS["blue"], lw=1.2, alpha=0.75, label="LHS 可行点"),
-        Line2D([0], [0], color=COLORS["green"], lw=1.2, alpha=0.75, label="GPR 引导可行点"),
-        Line2D([0], [0], color=COLORS["orange"], marker="o", markerfacecolor=COLORS["orange"], markeredgecolor=COLORS["black"], lw=2.4, label="最优解"),
+        Line2D([0], [0], color="#E0E0E0", lw=1.0, alpha=0.6, label="不可行"),
+        Line2D([0], [0], color=COLORS["blue"], lw=1.5, alpha=0.8, label="可行"),
+        Line2D([0], [0], color=COLORS["orange"], marker="o", markersize=6, 
+               markeredgecolor="black", lw=2.5, label="最优解"),
     ]
-    ax.legend(handles=legend_handles, loc="center left", bbox_to_anchor=(1.01, 0.5))
+    
+    ax.legend(
+        handles=legend_handles, 
+        loc="center left", 
+        bbox_to_anchor=(1.02, 0.5),
+        fontsize=7,
+        frameon=True,
+        edgecolor="#EEEEEE"
+    )
+
     beautify_axis(ax, minor=False)
-    save_figure(fig, "cylinder_parallel_coordinates")
+    save_figure(fig, "参数平行优化变化")
     plt.close(fig)
 
 

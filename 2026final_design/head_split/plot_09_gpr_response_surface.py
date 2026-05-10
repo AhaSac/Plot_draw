@@ -1,20 +1,14 @@
 """
 plot_09_gpr_response_surface.py
 
-输出 PNG：figures/cylinder/cylinder_gpr_response_surface.png
+输出 PNG：figures/head/高斯过程响应面.png
 功能：GPR 二维响应面图：固定其余参数为最优解，展示质量和屈曲压力的代理模型等高线。
-
-修改提示：
-- 本脚本只负责生成上面这 1 张 PNG；
-- 图形样式、颜色、字体、数据读取等公共设置在 cylinder_plot_common.py 中；
-- 想改坐标轴、标题、标注、颜色映射时，优先修改下方 draw_gpr_response_surface() 函数。
 """
 
-from cylinder_plot_common import *
+from head_plot_common import *
 
 
-
-# ============================== 对应 PNG：cylinder_gpr_response_surface.png ==============================
+# ============================== 对应 PNG：高斯过程响应面.png ==============================
 # 功能：GPR 二维响应面图：固定其余参数为最优解，展示质量和屈曲压力的代理模型等高线。
 def draw_gpr_response_surface(
     design: pd.DataFrame,
@@ -26,18 +20,14 @@ def draw_gpr_response_surface(
     """二维响应面/等高线图：固定其余参数为最优解取值。"""
     x_col, y_col = response_surface_parameters(sensitivity)
     grid_n = 120
-    
-    # ================= 修改开始：计算数据范围并增加 5% 留白 =================
+
     x_min, x_max = design[x_col].min(), design[x_col].max()
     y_min, y_max = design[y_col].min(), design[y_col].max()
-    
     x_pad = (x_max - x_min) * 0.05
     y_pad = (y_max - y_min) * 0.05
-    
+
     x_values = np.linspace(x_min - x_pad, x_max + x_pad, grid_n)
     y_values = np.linspace(y_min - y_pad, y_max + y_pad, grid_n)
-    # ================= 修改结束 =================
-    
     xx, yy = np.meshgrid(x_values, y_values)
 
     surface_frame = pd.DataFrame({col: np.full(xx.size, best[col]) for col in PARAMETER_COLS})
@@ -57,8 +47,7 @@ def draw_gpr_response_surface(
 
     for ax, target in zip(axes, RESPONSE_COLS):
         zz = predictions[target]
-        levels = 16
-        contour = ax.contourf(xx, yy, zz, levels=levels, cmap=cmap_by_target[target])
+        contour = ax.contourf(xx, yy, zz, levels=16, cmap=cmap_by_target[target])
         ax.contour(xx, yy, zz, levels=8, colors="white", linewidths=0.35, alpha=0.75)
         if target == "buckling_pressure":
             ax.contour(xx, yy, zz, levels=[pressure_limit], colors=COLORS["black"], linewidths=1.0, linestyles="--")
@@ -93,7 +82,8 @@ def draw_gpr_response_surface(
         cbar.set_label(RESPONSE_LABELS[target])
         beautify_axis(ax)
 
-    fixed = ", ".join([f"{col}={best[col]:.3g}" for col in PARAMETER_COLS if col not in {x_col, y_col}])
+   # fixed = ", ".join([f"{col}={best[col]:.3g}" for col in PARAMETER_COLS if col not in {x_col, y_col}])
+  #  fig.suptitle(f"固定其余参数：{fixed}", fontsize=7.0, y=1.03)
 
     save_figure(fig, "高斯过程响应面")
     plt.close(fig)

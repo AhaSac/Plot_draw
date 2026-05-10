@@ -1,16 +1,11 @@
 """
 plot_08_gpr_predicted_vs_actual.py
 
-输出 PNG：figures/cylinder/cylinder_gpr_predicted_vs_actual.png
+输出 PNG：figures/head/高斯过程回归模型验证：预测值与真实值.png
 功能：GPR 预测值-真实值验证图：展示五折交叉验证误差和置信区间。
-
-修改提示：
-- 本脚本只负责生成上面这 1 张 PNG；
-- 图形样式、颜色、字体、数据读取等公共设置在 cylinder_plot_common.py 中；
-- 想改坐标轴、标题、标注、颜色映射时，优先修改下方 draw_gpr_validation() 函数。
 """
 
-from cylinder_plot_common import *
+from head_plot_common import *
 
 
 def is_mass_target(target: str, label: str) -> bool:
@@ -21,9 +16,7 @@ def is_mass_target(target: str, label: str) -> bool:
     return any(k in target_text for k in mass_keywords) or any(k in label_text for k in mass_keywords)
 
 
-
-
-# ============================== 对应 PNG：cylinder_gpr_predicted_vs_actual.png ==============================
+# ============================== 对应 PNG：高斯过程回归模型验证：预测值与真实值.png ==============================
 # 功能：GPR 预测值-真实值验证图：展示五折交叉验证误差和置信区间。
 def draw_gpr_validation(validation: pd.DataFrame, metrics: pd.DataFrame) -> None:
     """预测值 vs 真实值：带置信区间并标注 R2/RMSE/MAE。"""
@@ -34,11 +27,8 @@ def draw_gpr_validation(validation: pd.DataFrame, metrics: pd.DataFrame) -> None
         target_metrics = metrics[metrics["target"] == target].iloc[0]
 
         label = RESPONSE_LABELS[target]
-        is_mass = is_mass_target(target, label)
-        is_buckling = ("屈曲" in label) or ("buckling" in str(target).lower())
-
-        scale = 1000.0 if is_mass else 1.0
-        unit = " kg" if is_mass else ""
+        scale = 1.0
+        unit =  ""
 
         x = subset["actual"].to_numpy(dtype=float) * scale
         y = subset["predicted"].to_numpy(dtype=float) * scale
@@ -82,19 +72,9 @@ def draw_gpr_validation(validation: pd.DataFrame, metrics: pd.DataFrame) -> None
         high = max(np.nanmax(x), np.nanmax(y))
         span = high - low if high > low else 1.0
         pad = span * 0.08
+        band = 0.10 * span
 
-        # 屈曲图容差带放宽一些，只是视觉优化；若想严格一致，可统一用 0.10
-        band_frac = 0.20 if is_buckling else 0.10
-        band = band_frac * span
-
-        ax.plot(
-            [low - pad, high + pad],
-            [low - pad, high + pad],
-            color=COLORS["black"],
-            lw=0.85,
-            ls=(0, (3, 2)),
-        )
-
+        ax.plot([low - pad, high + pad], [low - pad, high + pad], color=COLORS["black"], lw=0.85, ls=(0, (3, 2)))
         ax.fill_between(
             [low - pad, high + pad],
             [low - pad - band, high + pad - band],
@@ -106,10 +86,7 @@ def draw_gpr_validation(validation: pd.DataFrame, metrics: pd.DataFrame) -> None
 
         ax.set_xlim(low - pad, high + pad)
         ax.set_ylim(low - pad, high + pad)
-
-        # 如果你想让屈曲“看起来没那么夸张”，可以注释掉这一行
         ax.set_aspect("equal", adjustable="box")
-
         ax.set_xlabel(f"真实{label}{unit}")
         ax.set_ylabel(f"预测{label}{unit}")
 
@@ -129,12 +106,7 @@ def draw_gpr_validation(validation: pd.DataFrame, metrics: pd.DataFrame) -> None
             ha="left",
             va="top",
             fontsize=6.2,
-            bbox={
-                "boxstyle": "round,pad=0.25",
-                "fc": "white",
-                "ec": COLORS["light_gray"],
-                "lw": 0.6,
-            },
+            bbox={"boxstyle": "round,pad=0.25", "fc": "white", "ec": COLORS["light_gray"], "lw": 0.6},
         )
 
         beautify_axis(ax)

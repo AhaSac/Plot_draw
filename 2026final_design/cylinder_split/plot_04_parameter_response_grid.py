@@ -64,10 +64,6 @@ def draw_parameter_response_grid(
                 zorder=4,
             )
 
-            x_all, y_all = binned_median_line(design[param], design[response])
-            if len(x_all):
-                ax.plot(x_all, y_all, color=COLORS["gray"], lw=0.9, ls=(0, (2, 2)), zorder=1)
-
             x_feas, y_feas = binned_median_line(feasible[param], feasible[response])
             if len(x_feas):
                 ax.plot(x_feas, y_feas, color=COLORS["green"], lw=1.2, zorder=5)
@@ -104,7 +100,6 @@ def draw_parameter_response_grid(
 
             beautify_axis(ax)
 
-    axes[0, 0].set_title("参数-响应关系图", loc="left", fontsize=8.2, fontweight="bold")
     legend_handles = [
         Line2D([0], [0], marker="o", color="none", markerfacecolor="white", markeredgecolor=COLORS["gray"], markersize=4.2, label="不可行"),
         Line2D([0], [0], marker="o", color="none", markerfacecolor=COLORS["green"], markeredgecolor="white", markersize=4.8, label="可行"),
@@ -120,7 +115,7 @@ def draw_parameter_response_grid(
         handlelength=1.5,
         columnspacing=1.2,
     )
-    save_figure(fig, "cylinder_parameter_response_grid")
+    save_figure(fig, "参数响应关系")
     plt.close(fig)
 
 
