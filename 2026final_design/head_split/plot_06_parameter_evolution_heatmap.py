@@ -19,12 +19,34 @@ def draw_parameter_evolution_heatmap(design: pd.DataFrame, best: pd.Series) -> N
     fig, ax = plt.subplots(figsize=(8.8, 4.2), constrained_layout=True)
     image = ax.imshow(heat, aspect="auto", cmap="viridis", interpolation="nearest")
 
-    ax.set_xticks(np.arange(len(heat_cols)), [PARAMETER_LABELS.get(col, RESPONSE_LABELS.get(col, col)) for col in heat_cols], rotation=45, ha="right")
+    # --- 在最优算例对应的“质量”和“屈曲特征值”格子上加星号 ---
+    if "case_name" in ordered.columns and "case_name" in best.index and best["case_name"] in ordered["case_name"].values:
+        best_pos = int(np.where(ordered["case_name"].to_numpy() == best["case_name"])[0][0])
+
+        star_cols = ["total_mass", "buckling_pressure"]
+        for col in star_cols:
+            if col in heat_cols:
+                ax.scatter(
+                    [heat_cols.index(col)],
+                    [best_pos],
+                    marker="*",
+                    s=90,
+                    color=COLORS["orange"],
+                    edgecolors=COLORS["black"],
+                    linewidths=0.35,
+                    zorder=4,
+                )
+
+    ax.set_xticks(
+        np.arange(len(heat_cols)),
+        [PARAMETER_LABELS.get(col, RESPONSE_LABELS.get(col, col)) for col in heat_cols],
+        rotation=45,
+        ha="right",
+    )
     ax.set_yticks([])
+
     cbar = fig.colorbar(image, ax=ax, fraction=0.03, pad=0.02)
     cbar.set_label("归一化值")
-
-
 
     save_figure(fig, "封头参数演化热图")
     plt.close(fig)

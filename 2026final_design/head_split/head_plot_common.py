@@ -304,7 +304,9 @@ def load_data() -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series, float
     design = df.iloc[1:].copy()
     design["feasible"] = (design["buckling_pressure"] > limit) & (design["eigenvalue"] > limit)
     design["total_mass"] = design["total_mass"] * 1000.0
-    design["mass_reduction"] = 1.0 - design["total_mass"] / (float(baseline["total_mass"]) * 1000.0)
+    # baseline["total_mass"] and design["total_mass"] are both converted to kg above,
+    # so do not multiply baseline again when computing reduction.
+    design["mass_reduction"] = 1.0 - design["total_mass"] / float(baseline["total_mass"])
     design["buckling_margin"] = design["buckling_pressure"] - limit
     design["stage"] = np.where(
         design["case_index"] <= INITIAL_SCREENING_LAST_CASE,
