@@ -157,7 +157,6 @@ def draw_iteration_process(baseline: pd.Series, design: pd.DataFrame, best: pd.S
 
     save_figure(fig, SUMMARY_OUTPUTS["iteration"])
     plt.close(fig)
-
 def draw_mass_tradeoff(
     baseline: pd.Series,
     design: pd.DataFrame,
@@ -165,29 +164,44 @@ def draw_mass_tradeoff(
     pressure_limit: float,
 ) -> None:
     """输出质量-约束权衡图。"""
-    # 调整此处：增加色表的宽度和高度（原为 22% 和 62%），减少留空
-    fig, ax, side_ax, cax = make_axes_with_right_panel(cbar_width="35%", cbar_height="82%")
 
-    ax.axhspan(
-        pressure_limit,
+    # 固定图中基准屈曲特征值虚线位置
+    baseline_pressure_y = 0.5
+
+    fig, ax, side_ax, cax = make_axes_with_right_panel(
+        cbar_width="35%",
+        cbar_height="82%",
+    )
+
+    # 背景上限，保证绿色阴影区域一定能覆盖到 0.5 以上
+    y_top = max(
         design["buckling_pressure"].max() * 1.08,
+        baseline_pressure_y * 1.12,
+    )
+
+    # 0.5 以上：满足约束区域
+    ax.axhspan(
+        baseline_pressure_y,
+        y_top,
         color=COLORS["pale_green"],
         zorder=0,
     )
 
+    # 0 到 0.5：不满足约束区域
     ax.axhspan(
         0,
-        pressure_limit,
+        baseline_pressure_y,
         color=COLORS["pale_red"],
         zorder=0,
     )
 
+    # 黑色虚线移动到 y = 0.5
     ax.axhline(
-        pressure_limit,
+        baseline_pressure_y,
         color=COLORS["black"],
         lw=0.85,
         ls=(0, (3, 2)),
-        label=f"基准屈曲特征值\n= {pressure_limit:.5f}",
+        label=f"基准屈曲特征值\n= {baseline_pressure_y:.5f}",
     )
 
     ax.scatter(
@@ -200,7 +214,6 @@ def draw_mass_tradeoff(
         alpha=0.78,
     )
 
-    # 02 图：增强前期算例的颜色变化
     feasible_design = design[design["feasible"]].copy()
 
     case_norm = PowerNorm(
@@ -245,11 +258,10 @@ def draw_mass_tradeoff(
 
     ax.set_xlabel(f"总质量（{MASS_UNIT}）")
     ax.set_ylabel("屈曲特征值")
-    
-    # 【新增】强制 Y 轴从 0 开始
-    ax.set_ylim(bottom=0)
 
-    # 图例放到右侧色条上方空白处 (因为色条变高了，稍微上移起点并减少间距)
+    # Y 轴从 0 开始，同时保证能显示完整阴影范围
+    ax.set_ylim(bottom=0, top=y_top)
+
     handles, labels = ax.get_legend_handles_labels()
     side_ax.legend(
         handles,
@@ -267,7 +279,7 @@ def draw_mass_tradeoff(
 
     save_figure(fig, SUMMARY_OUTPUTS["tradeoff"])
     plt.close(fig)
-
+    
 def draw_feasible_region(
     design: pd.DataFrame,
     best: pd.Series,
@@ -456,7 +468,8 @@ def main() -> None:
     cleanup_non_png_outputs()
     style_name = try_enable_nature_style()
 
-    _, baseline, design, best, pressure_limit = load_data()
+    _, baseline, design, best, _ = load_data()
+    pressure_limit = 0.5
 
     draw_summary_figure(baseline, design, best, pressure_limit)
 

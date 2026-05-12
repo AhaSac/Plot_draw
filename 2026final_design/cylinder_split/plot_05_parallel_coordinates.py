@@ -82,10 +82,12 @@ def draw_parallel_coordinates(design: pd.DataFrame, best: pd.Series) -> None:
     ax.set_ylabel("归一化取值")
     
     # 4. 图例调整：将图例放在右侧，框线淡化
+    # 明确列出各阶段颜色，确保图中曲线与图例一致
     legend_handles = [
         Line2D([0], [0], color="#E0E0E0", lw=1.0, alpha=0.6, label="不可行"),
-        Line2D([0], [0], color=COLORS["blue"], lw=1.5, alpha=0.8, label="可行"),
-        Line2D([0], [0], color=COLORS["orange"], marker="o", markersize=6, 
+        Line2D([0], [0], color=COLORS["blue"], lw=0.95, alpha=0.8, label="LHS 可行"),
+        Line2D([0], [0], color="#2ECC71", lw=1.25, alpha=0.9, label="GPR 引导可行"),
+        Line2D([0], [0], color=COLORS["orange"], marker="o", markersize=6,
                markeredgecolor="black", lw=2.5, label="最优解"),
     ]
     

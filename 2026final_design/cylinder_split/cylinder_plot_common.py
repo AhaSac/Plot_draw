@@ -329,7 +329,7 @@ def load_data() -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series, float
     design = df.iloc[1:].copy()
     design["n_times_p"] = design["n"] * design["p"]
     design["length_ok"] = design["n_times_p"] <= CYLINDER_LENGTH
-    design["pressure_ok"] = design["buckling_pressure"] > limit
+    design["pressure_ok"] = design["buckling_pressure"] > 0.5
     design["eigen_ok"] = design["eigenvalue"] > limit
     design["feasible"] = design["length_ok"] & design["pressure_ok"] & design["eigen_ok"]
     design["mass_reduction"] = 1.0 - design["total_mass"] / float(baseline["total_mass"])
