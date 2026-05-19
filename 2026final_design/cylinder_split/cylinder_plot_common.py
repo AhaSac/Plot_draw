@@ -168,7 +168,8 @@ class SimpleGaussianProcess:
         return mean, std
 
 
-CSV_PATH = ROOT / "cylinder.csv"
+CSV_COLUMNS = ["case_name", "t", "n", "p", "a", "total_mass", "eigenvalue", "buckling_pressure"]
+CSV_PATH = ROOT / "cylinder_new.csv"
 OUT_DIR = ROOT / "figures" / "cylinder"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -313,10 +314,22 @@ def case_index(case_name: object) -> int:
     return -1
 
 
+def read_cylinder_csv() -> pd.DataFrame:
+    """Read cylinder data from either headered or headerless CSV files."""
+    df = pd.read_csv(CSV_PATH)
+    if "case_name" in df.columns:
+        return df
+
+    df = pd.read_csv(CSV_PATH, header=None, names=CSV_COLUMNS)
+    if len(df.columns) != len(CSV_COLUMNS):
+        raise ValueError("Unexpected cylinder CSV column count: %s" % CSV_PATH)
+    return df
+
+
 def load_data() -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series, float]:
     """读取原始数据并构建可行性、阶段、收益等派生字段。"""
     # 读取原始 CSV，并生成后续绘图所需的可行性、阶段和优化收益字段。
-    df = pd.read_csv(CSV_PATH)
+    df = read_cylinder_csv()
     numeric_cols = ["t", "n", "p", "a", "total_mass", "eigenvalue", "buckling_pressure"]
     for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors="coerce")

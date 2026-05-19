@@ -59,6 +59,5 @@ def main() -> None:
     print(f"Current optimum: {best['case_name']}")
     print(f"Saved figures to: {OUT_DIR}")
 
-
 if __name__ == "__main__":
     main()
